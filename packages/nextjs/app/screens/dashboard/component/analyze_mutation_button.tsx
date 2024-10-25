@@ -13,7 +13,7 @@ interface AnalyzeMutationButtonProps {
 const AnalyzeMutationButton: React.FC<AnalyzeMutationButtonProps> = ({ contractFile, testFile }) => {
   return (
     <button
-      className={`mt-6 w-full py-2 rounded ${
+      className={` m-0 p-0 w-full py-2 rounded ${
         contractFile && testFile ? "bg-black text-white" : "bg-gray-400 text-gray-700 cursor-not-allowed"
       }`}
       disabled={!contractFile || !testFile}
