@@ -1,3 +1,8 @@
+/*
+ * Author : Manu Kenchappa Junjanna
+ * Email : manu1998kj@gmail.com
+ * Created on Fri Oct 25 2024
+ */
 import { FaChartPie } from "react-icons/fa";
 
 interface MutationScoreProps {

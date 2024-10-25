@@ -14,8 +14,8 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-white text-black p-8 flex flex-col items-center relative">
       {/* Background Image */}
-      <div className="absolute bottom-0 left-0 bg-no-repeat h-80 w-80">
-        <Image alt="SE2 logo" className="cursor-pointer h-52 w-52" fill src={analysisImage} />
+      <div className="absolute bottom-0 left-0 bg-no-repeat h-96 w-96">
+        <Image alt="SE2 logo" className="cursor-pointer" fill src={analysisImage} />
       </div>
 
       {/* Content on top of the background image */}

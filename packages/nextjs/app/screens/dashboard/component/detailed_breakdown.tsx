@@ -1,3 +1,8 @@
+/*
+ * Author : Manu Kenchappa Junjanna
+ * Email : manu1998kj@gmail.com
+ * Created on Fri Oct 25 2024
+ */
 import { FaClock, FaFlask, FaGasPump } from "react-icons/fa";
 
 const DetailedBreakdown = () => {
