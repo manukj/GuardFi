@@ -4,11 +4,11 @@ import React, { useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 
 interface CodeEditorProps {
-  title: string;
+  // title: string;
   onCodeChange?: (code: string) => void;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({ title, onCodeChange }) => {
+const CodeEditor: React.FC<CodeEditorProps> = ({ onCodeChange }) => {
   const [code, setCode] = useState<string>(`// Type your Solidity code here\n`);
   const [error, setError] = useState<string | null>(null);
   const editorRef = useRef<any>(null);
@@ -56,7 +56,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ title, onCodeChange }) => {
 
   return (
     <div className="flex flex-col space-y-4 w-full">
-      <h2 className="text-lg font-semibold text-gray-800">{title}</h2>
+      {/* <h2 className="text-lg font-semibold text-gray-800">{title}</h2> */}
 
       <Editor
         height="50vh"

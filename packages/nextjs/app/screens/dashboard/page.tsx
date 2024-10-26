@@ -1,38 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
-import Image from "next/image";
-import CodeInput from "./component/core_input";
-import DetailedBreakdown from "./component/detailed_breakdown";
-import MutationScore from "./component/mutation_score";
-import SurvivingMutations from "./component/surviving_mutations";
-import analysisImage from "~~/assets/analysis-image.png";
+import React, { useEffect, useState } from "react";
+import analyzeContract from "./api/analyzeContract";
+import SecurityAnalysis from "./component/security_analysis";
+import CommonLoader from "~~/components/CommonLoader";
 
 const Dashboard = () => {
-  const [mutationScore] = useState(85); // Example mutation score
+  const [contractContent, setContractContent] = useState<string | null>(null);
+  const [response, setResponse] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const storedContractContent = localStorage.getItem("contractContent");
+    if (storedContractContent) {
+      setContractContent(storedContractContent);
+      localStorage.removeItem("contractContent");
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      if (contractContent) {
+        setIsLoading(true); // Start loading
+        try {
+          const analysisResult = await analyzeContract(contractContent);
+          setResponse(analysisResult);
+          // setMutationScore(85); // Set the mutation score (replace with a dynamic calculation if available)
+        } catch (error) {
+          console.error("Error analyzing contract:", error);
+        } finally {
+          setIsLoading(false); // End loading
+        }
+      }
+    };
+
+    fetchAnalysis();
+  }, [contractContent]);
 
   return (
-    <div className="min-h-screen bg-white text-black p-8 flex flex-col items-center relative">
-      {/* Background Image */}
-      <div className="absolute bottom-0 left-0 bg-no-repeat h-96 w-96">
-        <Image alt="SE2 logo" className="cursor-pointer" fill src={analysisImage} />
-      </div>
+    <div className="h-screen bg-white text-black flex flex-col items-center">
+      {isLoading ? (
+        <CommonLoader loadingText="Analyzing your contract" />
+      ) : (
+        <>
+          {/* {<div className="absolute bottom-0 left-0 bg-no-repeat h-96 w-96">
+            <Image alt="SE2 logo" className="cursor-pointer" fill src={analysisImage} />
+          </div>} */}
 
-      {/* Content on top of the background image */}
-      <h1 className="text-3xl font-bold mb-6 text-center z-10">Dashboard</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-4xl z-10">
-        {/* Overall Mutation Score */}
-        <MutationScore score={mutationScore} />
+          {response ? (
+            <>
+              <div>
+                <h1 className="text-3xl font-bold mt-6 text-center ">Bridge Security Dashboard</h1>
+              </div>
+              <div className="flex-1  w-full">
+                <SecurityAnalysis vulnerabilities={response} />
+              </div>
+              <button className="bg-black w-full py-4 text-white my-10">Deploy Contract</button>
 
-        {/* Code Upload or Copy-Paste Section */}
-        <CodeInput />
+              {/* <SecurityAnalysis vulnerabilities={response} /> */}
 
-        {/* Detailed Breakdown */}
-        <DetailedBreakdown />
+              {/* Detailed Breakdown */}
+              {/* {response && <DetailedBreakdown />} */}
 
-        {/* Surviving Mutations */}
-        <SurvivingMutations />
-      </div>
+              {/* Surviving Mutations */}
+              {/* {response && <SurvivingMutations />} */}
+            </>
+          ) : (
+            <>No Content Found</>
+          )}
+        </>
+      )}
     </div>
   );
 };

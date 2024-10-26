@@ -5,7 +5,7 @@
  */
 import React, { useState } from "react";
 import Image from "next/image";
-import AnalyzeMutationButton from "./analyze_mutation_button";
+import AnalyzeMutationButton from "../../dashboard/component/analyze_mutation_button";
 import FileUploadCard from "./file_upload_card";
 import PickFileBottomSheet from "./pick_file_bottomsheet";
 import WriteCodeBottomSheet from "./write_code_bottom_sheet";
@@ -15,7 +15,7 @@ import brainImage from "~~/assets/brain-analysis.png";
 const CodeInput: React.FC = () => {
   const [isModalOpen, setModalOpen] = useState<"filePicker" | "codeEditor" | null>(null); // Manage modal type
   const [contractFile, setContractFile] = useState<File | null>(null);
-  const [testFile, setTestFile] = useState<File | null>(null);
+  // const [testFile, setTestFile] = useState<File | null>(null);
 
   // Handle contract file change
   const handleContractFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,9 +23,6 @@ const CodeInput: React.FC = () => {
   };
 
   // Handle test file change
-  const handleTestFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) setTestFile(e.target.files[0]);
-  };
 
   // Reset contract file
   const resetContractFile = () => {
@@ -33,9 +30,6 @@ const CodeInput: React.FC = () => {
   };
 
   // Reset test file
-  const resetTestFile = () => {
-    setTestFile(null);
-  };
 
   // Function to handle "Upload Code" click
   const handleUploadCodeClick = () => {
@@ -54,7 +48,7 @@ const CodeInput: React.FC = () => {
 
   return (
     <div className="bg-gray-200 p-6 rounded-lg shadow-md flex flex-col items-center justify-center text-center">
-      <h2 className="text-xl font-semibold mb-4">Code Input</h2>
+      {/* <h2 className="text-xl font-semibold mb-4">Code Input</h2> */}
       <div className="flex space-x-4">
         {/* Upload Code Button */}
         <button
@@ -80,8 +74,8 @@ const CodeInput: React.FC = () => {
         <PickFileBottomSheet
           isOpen={isModalOpen !== null}
           toggleModal={closeModal}
-          title={isModalOpen === "filePicker" ? "Upload Files" : "Write Code"}
-          width={isModalOpen === "filePicker" ? "max-w-2xl" : "max-w-6xl"}
+          title={isModalOpen === "filePicker" ? "Upload Files" : "Write Contract Code"}
+          width={isModalOpen === "filePicker" ? "max-w-1xl" : "max-w-6xl"}
         >
           {isModalOpen === "filePicker" ? (
             <div className="flex flex-col place-content-center items-center">
@@ -95,22 +89,13 @@ const CodeInput: React.FC = () => {
                   onCancel={resetContractFile}
                   icon="contract"
                 />
-
-                {/* Test File Upload Card */}
-                <FileUploadCard
-                  label="Upload Test"
-                  file={testFile}
-                  onFileChange={handleTestFileChange}
-                  onCancel={resetTestFile}
-                  icon="test"
-                />
               </div>
 
               {/* Analyze Mutation Button */}
-              <AnalyzeMutationButton contractFile={contractFile} testFile={testFile} />
+              <AnalyzeMutationButton contractFile={contractFile} />
             </div>
           ) : (
-            <WriteCodeBottomSheet /> // Render WriteCodeBottomSheet for code editor
+            <WriteCodeBottomSheet />
           )}
         </PickFileBottomSheet>
       )}

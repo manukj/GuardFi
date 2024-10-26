@@ -16,7 +16,7 @@ interface FileUploadCardProps {
 
 const FileUploadCard: React.FC<FileUploadCardProps> = ({ label, file, onFileChange, onCancel, icon }) => {
   return (
-    <div className="card w-full lg:w-60 bg-base-100  border-2  p-4 flex flex-col items-center space-y-4">
+    <div className="card w-full  bg-base-100  border-2  p-4 flex flex-col items-center space-y-4">
       <div className="flex items-center space-x-2">
         {icon === "contract" ? <FaFileContract size="1.5rem" /> : <FaFileAlt size="1.5rem" />}
         <span className="font-semibold">{label}</span>
@@ -26,7 +26,7 @@ const FileUploadCard: React.FC<FileUploadCardProps> = ({ label, file, onFileChan
         <div className="w-full">
           <input
             type="file"
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+            className="block w-full place-content-center items-center text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
             onChange={onFileChange}
           />
         </div>
