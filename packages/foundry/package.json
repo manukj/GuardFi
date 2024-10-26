@@ -20,6 +20,7 @@
     "verify-keystore": "make verify-keystore"
   },
   "dependencies": {
+    "@flarenetwork/flare-periphery-contracts": "^0.1.16",
     "dotenv": "~16.3.1",
     "envfile": "~6.18.0",
     "ethers": "~5.7.1",

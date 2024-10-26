@@ -1,16 +1,18 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "../contracts/YourContract.sol";
+import "../contracts/BridgeSecurityAnalyzerFTSO.sol";
 import "./DeployHelpers.s.sol";
 
-contract DeployYourContract is ScaffoldETHDeploy {
+contract DeployBridgeSecurityAnalyzer is ScaffoldETHDeploy {
   // use `deployer` from `ScaffoldETHDeploy`
   function run() external ScaffoldEthDeployerRunner {
-    YourContract yourContract = new YourContract(deployer);
+    // Deploy the BridgeSecurityAnalyzerFTSO contract with deployer as the operator address
+    BridgeSecurityAnalyzerFTSO analyzer = new BridgeSecurityAnalyzerFTSO(deployer);
+    
     console.logString(
       string.concat(
-        "YourContract deployed at: ", vm.toString(address(yourContract))
+        "BridgeSecurityAnalyzerFTSO deployed at: ", vm.toString(address(analyzer))
       )
     );
   }
