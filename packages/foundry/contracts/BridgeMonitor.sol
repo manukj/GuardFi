@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "packages/foundry/contracts/flare-periphery-contracts/coston/EVMTransaction.sol";
-import "packages/foundry/contracts/flare-periphery-contracts/coston/IStateConnector.sol";
+import "./flare-periphery-contracts/coston/EVMTransaction.sol";
+import "./flare-periphery-contracts/coston/IStateConnector.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract BridgeMonitor {
@@ -14,7 +14,7 @@ contract BridgeMonitor {
 
     // Bridge addresses
     address public sepoliaBridge;
-    address public goerliBridge;
+    address public holeskyBridge;
 
     struct SecurityAlert {
         bytes32 transactionId;
@@ -35,9 +35,9 @@ contract BridgeMonitor {
         address indexed bridgeAddress
     );
 
-    constructor(address _sepoliaBridge, address _goerliBridge) {
-        sepoliaBridge = _sepoliaBridge;
-        goerliBridge = _goerliBridge;
+    constructor() {
+        sepoliaBridge = 0xEC1436e5C911ae8a53066DF5E1CC79A9d8F8A789; //same because they both are on evm chains 
+        holeskyBridge = 0xEC1436e5C911ae8a53066DF5E1CC79A9d8F8A789;
     }
 
     function verifyAndProcessTransaction(EVMTransaction.Proof calldata proof) external {
@@ -47,7 +47,7 @@ contract BridgeMonitor {
         // Verify this transaction is from one of our bridges
         address txSource = proof.data.responseBody.receivingAddress;
         require(
-            txSource == sepoliaBridge || txSource == goerliBridge,
+            txSource == sepoliaBridge || txSource == holeskyBridge,
             "Not a monitored bridge"
         );
 
