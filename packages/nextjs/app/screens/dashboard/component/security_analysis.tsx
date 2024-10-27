@@ -1,68 +1,129 @@
+// app/screens/dashboard/component/security_analysis.tsx
 import React from "react";
-import { mockAnalysis } from "../api/analyzeContract";
-import { Shield } from "lucide-react";
+import { AlertTriangle, Code, Coins, Shield } from "lucide-react";
 
-type Vulnerability = {
-  function: string;
-  risk: number;
-  description: string;
-  recommendation: string;
+type SecurityMetric = {
+  score: number;
+  details: string[];
+  risk_level: "Low" | "Medium" | "High";
 };
 
-type SecurityDashboardProps = {
-  vulnerabilities: Vulnerability[];
+type SecurityAnalysisResult = {
+  complexity: SecurityMetric;
+  vulnerabilities: SecurityMetric;
+  financial_exposure: SecurityMetric;
+  upgradability: SecurityMetric;
+  behavior: SecurityMetric;
+  code_quality: SecurityMetric;
+  historical_performance: SecurityMetric;
+  overall_score: number;
 };
 
-const SecurityAnalysis = ({ vulnerabilities }: SecurityDashboardProps) => {
-  vulnerabilities = vulnerabilities ? vulnerabilities : mockAnalysis;
+type InsuranceQuote = {
+  monthly_premium: number;
+  coverage_amount: number;
+  deductible: number;
+};
 
-  // Sort vulnerabilities by risk level (high to low)
-  const sortedVulnerabilities = [...vulnerabilities].sort((a, b) => b.risk - a.risk);
+const SecurityAnalysis = ({ analysis }: { analysis: SecurityAnalysisResult }) => {
+  const calculateInsuranceQuote = (score: number): InsuranceQuote => {
+    // Base premium calculation based on security score
+    const basePremium = 1000 * (1 + (100 - score) / 100);
+    const coverage = 1000000 * (score / 100); // Higher coverage for safer contracts
+    const deductible = 10000 * ((100 - score) / 100); // Lower deductible for safer contracts
 
-  const getRiskColor = (risk: number) => {
-    const colors: { [key: number]: string } = {
-      5: "bg-red-100 text-red-800",
-      4: "bg-orange-100 text-orange-800",
-      3: "bg-yellow-100 text-yellow-800",
-      2: "bg-blue-100 text-blue-800",
-      1: "bg-green-100 text-green-800",
+    return {
+      monthly_premium: Math.round(basePremium),
+      coverage_amount: Math.round(coverage),
+      deductible: Math.round(deductible),
     };
-    return colors[risk] || "bg-gray-100";
   };
 
+  const insuranceQuote = calculateInsuranceQuote(analysis.overall_score);
+
   return (
-    <div className="h-full  p-8  ">
-      {/* Header */}
-      {/* <div className="mb-8">
-                <p className="text-gray-600">Contract: 0x1234...5678</p>
-            </div> */}
+    <div className="space-y-8 p-6">
+      {/* Overall Score */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <h2 className="text-2xl font-bold mb-4 flex items-center">
+          <Shield className="mr-2 text-blue-500" />
+          Overall Security Score: {analysis.overall_score}/100
+        </h2>
+        <div className="w-full bg-gray-200 rounded-full h-4">
+          <div
+            className={`h-4 rounded-full ${
+              analysis.overall_score > 80
+                ? "bg-green-500"
+                : analysis.overall_score > 60
+                ? "bg-yellow-500"
+                : "bg-red-500"
+            }`}
+            style={{ width: `${analysis.overall_score}%` }}
+          />
+        </div>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Vulnerability Analysis Panel */}
-        <div className="bg-white rounded-lg shadow p-6 col-span-full">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold flex items-center">
-              <Shield className="mr-2" size={24} />
-              Security Analysis
-            </h2>
-            <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm">
-              {sortedVulnerabilities.filter(vuln => vuln.risk >= 4).length} High Risk Issues
-            </span>
+      {/* Detailed Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Contract Complexity */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold flex items-center">
+            <Code className="mr-2 text-purple-500" />
+            Contract Complexity
+          </h3>
+          <div className="mt-2">
+            <div className="text-3xl font-bold text-purple-500 mb-2">{analysis.complexity.score}/100</div>
+            <ul className="list-disc list-inside text-sm">
+              {analysis.complexity.details.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
           </div>
+        </div>
 
-          {/* Vulnerability List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sortedVulnerabilities.map((vuln, index) => (
-              <div key={index} className={`p-4 rounded-lg ${getRiskColor(vuln.risk)}`}>
-                <div className="flex justify-between items-start mb-2">
-                  <div className="font-medium">{vuln.function}</div>
-                  <span className="px-2 py-1 bg-white bg-opacity-50 rounded text-sm">Risk Level: {vuln.risk}/5</span>
-                </div>
-                <p className="text-sm mb-2">{vuln.description}</p>
-                <p className="text-sm font-medium">Recommendation: {vuln.recommendation}</p>
-              </div>
-            ))}
+        {/* Vulnerabilities */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold flex items-center">
+            <AlertTriangle className="mr-2 text-red-500" />
+            Security Vulnerabilities
+          </h3>
+          <div className="mt-2">
+            <div className="text-3xl font-bold text-red-500 mb-2">{analysis.vulnerabilities.score}/100</div>
+            <ul className="list-disc list-inside text-sm">
+              {analysis.vulnerabilities.details.map((detail, index) => (
+                <li key={index}>{detail}</li>
+              ))}
+            </ul>
           </div>
+        </div>
+
+        {/* Add other metric cards similarly */}
+      </div>
+
+      {/* Insurance Quote Section */}
+      <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
+        <h2 className="text-2xl font-bold mb-4 flex items-center">
+          <Coins className="mr-2 text-green-500" />
+          Smart Contract Insurance Quote
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <p className="text-gray-600">Monthly Premium</p>
+            <p className="text-3xl font-bold text-green-500">${insuranceQuote.monthly_premium}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-gray-600">Coverage Amount</p>
+            <p className="text-3xl font-bold text-blue-500">${insuranceQuote.coverage_amount.toLocaleString()}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-gray-600">Deductible</p>
+            <p className="text-3xl font-bold text-purple-500">${insuranceQuote.deductible.toLocaleString()}</p>
+          </div>
+        </div>
+        <div className="mt-6 text-center">
+          <button className="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 transition-colors">
+            Purchase Insurance
+          </button>
         </div>
       </div>
     </div>
