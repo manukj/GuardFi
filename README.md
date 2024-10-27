@@ -1,11 +1,11 @@
-# 🛡️ InsuraSmart
+# 🛡️ GuardFi
 
 <h4 align="center">
-  <a href="https://insurasmart.io/docs">Documentation</a> |
-  <a href="https://insurasmart.io">Website</a>
+  <a href="https://GuardFi.io/docs">Documentation</a> |
+  <a href="https://GuardFi.io">Website</a>
 </h4>
 
-InsuraSmart is a decentralized insurance platform that provides risk assessment and coverage for smart contracts. By analyzing your Solidity code and assessing risk metrics, InsuraSmart helps you protect against potential exploits. The platform also leverages AI, cross-chain verification with Flare, and static analysis tools to evaluate security vulnerabilities.
+GuardFi is a decentralized insurance platform that provides risk assessment and coverage for smart contracts. By analyzing your Solidity code and assessing risk metrics, GuardFi helps you protect against potential exploits. The platform also leverages AI, cross-chain verification with Flare, and static analysis tools to evaluate security vulnerabilities.
 
 🚀 Built using Next.js, Foundry, Solidity, Tailwind CSS, and integrated with Flock and Flare for advanced AI and cross-chain functionality.
 
@@ -15,15 +15,15 @@ InsuraSmart is a decentralized insurance platform that provides risk assessment 
 - 📝 **Static Analysis**: Integrated tools like Mythril and Slither for thorough contract review.
 - 💼 **Insurance Plans**: Customized coverage based on assessed risk levels, enabling you to protect your project against exploitation.
 
-![InsuraSmart Security Analysis Tab](https://your-image-url.com/insurasmart-analysis.png)
+![GuardFi Security Analysis Tab](https://your-image-url.com/GuardFi-analysis.png)
 
 ## Requirements
 
-To use InsuraSmart, make sure you have the following:
+To use GuardFi, make sure you have the following:
 
 - [Node (>= v18.18)](https://nodejs.org/en/download/)
 - Conda for managing Python environments
 - [Foundry](https://getfoundry.sh/) for Solidity testing and deployment
 - [Git](https://git-scm.com/downloads)
 
-With InsuraSmart, you can protect your Ethereum smart contracts and rest assured knowing they’re secured against potential exploits. Join us in making blockchain safer for everyone!
+With GuardFi, you can protect your Ethereum smart contracts and rest assured knowing they’re secured against potential exploits. Join us in making blockchain safer for everyone!
