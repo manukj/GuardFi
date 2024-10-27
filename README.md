@@ -26,7 +26,7 @@ To use GuardFi, make sure you have the following:
 - [Foundry](https://getfoundry.sh/) for Solidity testing and deployment
 - [Git](https://git-scm.com/downloads)
 
-<<<<<<< HEAD
+HEAD
 With GuardFi, you can protect your Ethereum smart contracts and rest assured knowing they’re secured against potential exploits. Join us in making blockchain safer for everyone!
 =======
 With GuardFi, you can protect your Ethereum smart contracts and rest assured knowing they’re secured against potential exploits. Join us in making blockchain safer for everyone!
