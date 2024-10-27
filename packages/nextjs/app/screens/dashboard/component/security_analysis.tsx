@@ -1,131 +1,111 @@
 // app/screens/dashboard/component/security_analysis.tsx
 import React from "react";
-import { AlertTriangle, Code, Coins, Shield } from "lucide-react";
+import { Activity, AlertTriangle, Code, LucideIcon, Settings, Shield } from "lucide-react";
 
-type SecurityMetric = {
+interface SecurityMetric {
   score: number;
   details: string[];
-  risk_level: "Low" | "Medium" | "High";
-};
+  risk_level: string;
+}
 
-type SecurityAnalysisResult = {
+interface SecurityAnalysisResponse {
+  overall_score: number;
   complexity: SecurityMetric;
   vulnerabilities: SecurityMetric;
-  financial_exposure: SecurityMetric;
   upgradability: SecurityMetric;
   behavior: SecurityMetric;
-  code_quality: SecurityMetric;
-  historical_performance: SecurityMetric;
-  overall_score: number;
-};
+}
 
-type InsuranceQuote = {
-  monthly_premium: number;
-  coverage_amount: number;
-  deductible: number;
-};
+interface SecurityAnalysisProps {
+  analysis: SecurityAnalysisResponse;
+}
 
-const SecurityAnalysis = ({ analysis }: { analysis: SecurityAnalysisResult }) => {
-  const calculateInsuranceQuote = (score: number): InsuranceQuote => {
-    // Base premium calculation based on security score
-    const basePremium = 1000 * (1 + (100 - score) / 100);
-    const coverage = 1000000 * (score / 100); // Higher coverage for safer contracts
-    const deductible = 10000 * ((100 - score) / 100); // Lower deductible for safer contracts
+interface MetricCardProps {
+  title: string;
+  icon: LucideIcon;
+  metric: SecurityMetric;
+}
 
-    return {
-      monthly_premium: Math.round(basePremium),
-      coverage_amount: Math.round(coverage),
-      deductible: Math.round(deductible),
-    };
+const SecurityAnalysis: React.FC<SecurityAnalysisProps> = ({ analysis }) => {
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return "text-green-500";
+    if (score >= 60) return "text-yellow-500";
+    return "text-red-500";
   };
 
-  const insuranceQuote = calculateInsuranceQuote(analysis.overall_score);
+  const getRiskBadgeColor = (risk: string): string => {
+    switch (risk.toLowerCase()) {
+      case "low":
+        return "bg-green-100 text-green-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "high":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const MetricCard: React.FC<MetricCardProps> = ({ title, icon: Icon, metric }) => (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <Icon className="mr-2 h-6 w-6" />
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        <span className={`text-3xl font-bold ${getScoreColor(metric.score)}`}>{metric.score}%</span>
+      </div>
+      <div className="space-y-2">
+        <span className={`inline-block px-3 py-1 rounded-full text-sm ${getRiskBadgeColor(metric.risk_level)}`}>
+          {metric.risk_level} Risk
+        </span>
+        <ul className="mt-3 space-y-1">
+          {metric.details.map((detail: string, index: number) => (
+            <li key={index} className="text-sm text-gray-600 flex items-start">
+              <span className="inline-block w-2 h-2 rounded-full bg-gray-400 mt-1.5 mr-2" />
+              {detail}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-6">
       {/* Overall Score */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-2xl font-bold mb-4 flex items-center">
-          <Shield className="mr-2 text-blue-500" />
-          Overall Security Score: {analysis.overall_score}/100
-        </h2>
-        <div className="w-full bg-gray-200 rounded-full h-4">
-          <div
-            className={`h-4 rounded-full ${
-              analysis.overall_score > 80
-                ? "bg-green-500"
-                : analysis.overall_score > 60
-                ? "bg-yellow-500"
-                : "bg-red-500"
-            }`}
-            style={{ width: `${analysis.overall_score}%` }}
-          />
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Shield className="mr-2 h-8 w-8" />
+            <div>
+              <h2 className="text-2xl font-bold">Overall Security Score</h2>
+              <p className="text-gray-600">Comprehensive security assessment</p>
+            </div>
+          </div>
+          <span className={`text-4xl font-bold ${getScoreColor(analysis.overall_score)}`}>
+            {analysis.overall_score}%
+          </span>
         </div>
       </div>
 
-      {/* Detailed Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Contract Complexity */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold flex items-center">
-            <Code className="mr-2 text-purple-500" />
-            Contract Complexity
-          </h3>
-          <div className="mt-2">
-            <div className="text-3xl font-bold text-purple-500 mb-2">{analysis.complexity.score}/100</div>
-            <ul className="list-disc list-inside text-sm">
-              {analysis.complexity.details.map((detail, index) => (
-                <li key={index}>{detail}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Vulnerabilities */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold flex items-center">
-            <AlertTriangle className="mr-2 text-red-500" />
-            Security Vulnerabilities
-          </h3>
-          <div className="mt-2">
-            <div className="text-3xl font-bold text-red-500 mb-2">{analysis.vulnerabilities.score}/100</div>
-            <ul className="list-disc list-inside text-sm">
-              {analysis.vulnerabilities.details.map((detail, index) => (
-                <li key={index}>{detail}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Add other metric cards similarly */}
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <MetricCard title="Code Complexity" icon={Code} metric={analysis.complexity} />
+        <MetricCard title="Security Issues" icon={AlertTriangle} metric={analysis.vulnerabilities} />
+        <MetricCard title="Upgradability" icon={Settings} metric={analysis.upgradability} />
+        <MetricCard title="Behavior Analysis" icon={Activity} metric={analysis.behavior} />
       </div>
 
-      {/* Insurance Quote Section */}
-      <div className="bg-white rounded-lg shadow-lg p-6 mt-8">
-        <h2 className="text-2xl font-bold mb-4 flex items-center">
-          <Coins className="mr-2 text-green-500" />
-          Smart Contract Insurance Quote
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <p className="text-gray-600">Monthly Premium</p>
-            <p className="text-3xl font-bold text-green-500">${insuranceQuote.monthly_premium}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-gray-600">Coverage Amount</p>
-            <p className="text-3xl font-bold text-blue-500">${insuranceQuote.coverage_amount.toLocaleString()}</p>
-          </div>
-          <div className="text-center">
-            <p className="text-gray-600">Deductible</p>
-            <p className="text-3xl font-bold text-purple-500">${insuranceQuote.deductible.toLocaleString()}</p>
+      {/* Risk Warning */}
+      {analysis.overall_score < 80 && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r">
+          <div className="flex">
+            <AlertTriangle className="h-6 w-6 text-yellow-400 mr-2" />
+            <p className="text-sm text-yellow-700">Security concerns detected. Review recommended before deployment.</p>
           </div>
         </div>
-        <div className="mt-6 text-center">
-          <button className="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-600 transition-colors">
-            Purchase Insurance
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

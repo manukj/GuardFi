@@ -1,26 +1,44 @@
-export const mockAnalysis = {
+// app/screens/api/analyzeContract.tsx
+export interface SecurityMetrics {
+  score: number;
+  details: string[];
+  risk_level: string;
+}
+
+export interface SecurityAnalysisResult {
+  overall_score: number;
+  complexity: SecurityMetrics;
+  vulnerabilities: SecurityMetrics;
+  upgradability: SecurityMetrics;
+  behavior: SecurityMetrics;
+}
+
+export const mockAnalysis: SecurityAnalysisResult = {
   overall_score: 75,
-  gas_score: 82,
-  code_quality: 88,
-  vulnerabilities: [
-    {
-      function: "withdraw()",
-      risk: 5,
-      description: "Potential reentrancy vulnerability in withdrawal function",
-      recommendation: "Implement checks-effects-interactions pattern and use ReentrancyGuard",
-    },
-    {
-      function: "transferOwnership()",
-      risk: 4,
-      description: "No two-step ownership transfer process",
-      recommendation: "Implement two-step ownership transfer to prevent accidental transfers",
-    },
-  ],
+  complexity: {
+    score: 80,
+    details: ["Lines of Code: 150", "External Calls: 2", "Nesting Depth: 3", "State Variables: 5"],
+    risk_level: "Low",
+  },
+  vulnerabilities: {
+    score: 70,
+    details: ["No major vulnerabilities detected"],
+    risk_level: "Medium",
+  },
+  upgradability: {
+    score: 85,
+    details: ["Upgradeable: No", "Access Control: Yes"],
+    risk_level: "Low",
+  },
+  behavior: {
+    score: 75,
+    details: ["Reentrancy Protection: Yes", "Access Controls: Yes"],
+    risk_level: "Medium",
+  },
 };
 
-export default async function analyzeContract(contractCode: string) {
+export default async function analyzeContract(contractCode: string): Promise<SecurityAnalysisResult> {
   try {
-    // Call your Python analysis endpoint
     const response = await fetch("/api/analyze", {
       method: "POST",
       headers: {
@@ -37,7 +55,6 @@ export default async function analyzeContract(contractCode: string) {
     return result.data;
   } catch (error) {
     console.error("Contract analysis error:", error);
-    // Return mock data during development
     return mockAnalysis;
   }
 }

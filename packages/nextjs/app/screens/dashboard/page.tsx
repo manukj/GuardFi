@@ -6,45 +6,20 @@ import SecurityAnalysis from "./component/security_analysis";
 import { AlertTriangle } from "lucide-react";
 import CommonLoader from "~~/components/CommonLoader";
 
-// Define types for our security analysis
-type SecurityAnalysisResponse = {
+// Define the complete type structure
+interface SecurityMetric {
+  score: number;
+  details: string[];
+  risk_level: string;
+}
+
+interface SecurityAnalysisResponse {
   overall_score: number;
-  complexity: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-  vulnerabilities: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-  financial_exposure: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-  upgradability: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-  behavior: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-  code_quality: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-  historical_performance: {
-    score: number;
-    details: string[];
-    risk_level: "Low" | "Medium" | "High";
-  };
-};
+  complexity: SecurityMetric;
+  vulnerabilities: SecurityMetric;
+  upgradability: SecurityMetric;
+  behavior: SecurityMetric;
+}
 
 const Dashboard = () => {
   const [contractContent, setContractContent] = useState<string | null>(null);
@@ -67,11 +42,11 @@ const Dashboard = () => {
         setError(null);
 
         try {
-          const analysisResult = await analyzeContract(contractContent);
-          setResponse(analysisResult);
-        } catch (error) {
-          console.error("Error analyzing contract:", error);
-          setError("Failed to analyze contract. Please try again.");
+          const result = await analyzeContract(contractContent);
+          setResponse(result);
+        } catch (err) {
+          console.error("Error analyzing contract:", err);
+          setError(err instanceof Error ? err.message : "Failed to analyze contract. Please try again.");
         } finally {
           setIsLoading(false);
         }
@@ -81,15 +56,35 @@ const Dashboard = () => {
     fetchAnalysis();
   }, [contractContent]);
 
-  const handleDeploy = async () => {
-    // Add deployment logic here
-    if (response && response.overall_score < 60) {
-      if (!confirm("This contract has a low security score. Are you sure you want to deploy?")) {
-        return;
-      }
-    }
-    // Implement deployment logic
-    console.log("Deploying contract...");
+  const calculateRiskLevel = (score: number): string => {
+    if (score >= 80) return "Safe to deploy";
+    if (score >= 60) return "Deploy with caution";
+    return "High risk - Review recommended";
+  };
+
+  const getDeployButtonClass = (score: number): string => {
+    if (score >= 80) return "bg-green-500 hover:bg-green-600";
+    if (score >= 60) return "bg-yellow-500 hover:bg-yellow-600";
+    return "bg-red-500 hover:bg-red-600";
+  };
+
+  const calculateInsurancePremium = (analysisResult: SecurityAnalysisResponse): number => {
+    const baseRate = 1000; // Base premium in USD
+
+    // Calculate risk factors
+    const complexityFactor = (100 - analysisResult.complexity.score) / 100;
+    const vulnerabilityFactor = (100 - analysisResult.vulnerabilities.score) / 100;
+    const upgradabilityFactor = (100 - analysisResult.upgradability.score) / 100;
+    const behaviorFactor = (100 - analysisResult.behavior.score) / 100;
+
+    // Weight the factors
+    const riskScore =
+      complexityFactor * 0.2 + vulnerabilityFactor * 0.4 + upgradabilityFactor * 0.2 + behaviorFactor * 0.2;
+
+    // Calculate final premium
+    const premium = baseRate * (1 + riskScore * 2); // Can double the base rate for highest risk
+
+    return Math.round(premium);
   };
 
   return (
@@ -117,26 +112,25 @@ const Dashboard = () => {
               </div>
 
               <div className="w-full px-4 py-6 bg-white border-t">
-                <div className="max-w-7xl mx-auto">
+                <div className="max-w-7xl mx-auto space-y-4">
+                  {/* Insurance Cost Display */}
+                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h3 className="text-lg font-semibold text-blue-800">Recommended Insurance</h3>
+                    <p className="text-blue-600">Estimated monthly premium: ${calculateInsurancePremium(response)}</p>
+                    <p className="text-sm text-blue-500 mt-1">Premium based on comprehensive risk analysis</p>
+                  </div>
+
                   <button
-                    onClick={handleDeploy}
-                    className={`w-full py-4 text-white rounded-lg transition-colors ${
-                      response.overall_score >= 80
-                        ? "bg-green-500 hover:bg-green-600"
-                        : response.overall_score >= 60
-                        ? "bg-yellow-500 hover:bg-yellow-600"
-                        : "bg-red-500 hover:bg-red-600"
-                    }`}
+                    onClick={() => console.log("Deploy contract")}
+                    className={`w-full py-4 text-white rounded-lg transition-colors ${getDeployButtonClass(
+                      response.overall_score,
+                    )}`}
                   >
-                    {response.overall_score >= 80
-                      ? "Deploy Contract (Safe)"
-                      : response.overall_score >= 60
-                      ? "Deploy Contract (Caution)"
-                      : "Deploy Contract (High Risk)"}
+                    Deploy Contract ({calculateRiskLevel(response.overall_score)})
                   </button>
 
                   {response.overall_score < 80 && (
-                    <p className="text-center text-sm text-gray-600 mt-2">
+                    <p className="text-center text-sm text-gray-600">
                       Consider addressing security concerns before deployment
                     </p>
                   )}

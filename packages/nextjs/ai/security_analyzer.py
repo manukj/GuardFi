@@ -1,145 +1,187 @@
 # ai/security_analyzer.py
 import sys
 import json
-import re
+import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import re
+import os
 
 class SecurityAnalyzer:
     def __init__(self):
-        self.model_name = "magentoooo/task-13-Qwen-Qwen1.5-0.5B"
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name)
+        try:
+            self.model_name = "Qwen/Qwen1.5-0.5B"
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, trust_remote_code=True)
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float32, trust_remote_code=True)
+        except Exception as e:
+            print(f"Model loading error: {str(e)}")
+            raise
 
-    def calculate_complexity_score(self, lines_count: int, external_calls: int, nesting_depth: int) -> int:
-        """Calculate complexity score based on code metrics"""
-        # Penalize for excessive lines of code
-        loc_score = 100 - min(lines_count / 10, 50)  # -50 points max for LOC
+    def analyze_contract(self, code: str) -> dict:
+        # Static Analysis
+        static_metrics = self._static_analysis(code)
         
-        # Penalize for external calls
-        calls_score = 100 - (external_calls * 10)  # -10 points per external call
+        # AI Analysis
+        ai_analysis = self._ai_analysis(code)
         
-        # Penalize for deep nesting
-        nesting_score = 100 - (nesting_depth * 15)  # -15 points per nesting level
+        # Combine analyses
+        combined_score = self._calculate_final_score(static_metrics, ai_analysis)
         
-        # Calculate weighted average
-        final_score = (loc_score * 0.4 + calls_score * 0.3 + nesting_score * 0.3)
-        
-        # Ensure score is between 0 and 100
-        return max(0, min(100, final_score))
+        return {
+            "overall_score": combined_score,
+            "complexity": {
+                "score": static_metrics["complexity_score"],
+                "details": [
+                    f"Lines of Code: {static_metrics['loc']}",
+                    f"External Calls: {static_metrics['external_calls']}",
+                    f"Nesting Depth: {static_metrics['nesting_depth']}",
+                    f"State Variables: {static_metrics['state_variables']}",
+                ],
+                "risk_level": self._get_risk_level(static_metrics["complexity_score"])
+            },
+            "vulnerabilities": {
+                "score": ai_analysis["security_score"],
+                "details": ai_analysis["vulnerabilities"],
+                "risk_level": self._get_risk_level(ai_analysis["security_score"])
+            },
+            "upgradability": {
+                "score": static_metrics["upgradability_score"],
+                "details": static_metrics["upgradability_details"],
+                "risk_level": self._get_risk_level(static_metrics["upgradability_score"])
+            },
+            "behavior": {
+                "score": static_metrics["behavior_score"],
+                "details": static_metrics["behavior_details"],
+                "risk_level": self._get_risk_level(static_metrics["behavior_score"])
+            }
+        }
 
-    def analyze_complexity(self, code: str) -> dict:
-        lines = code.split('\n')
+    def _static_analysis(self, code: str) -> dict:
+        # Basic metrics
+        loc = len(code.split('\n'))
         external_calls = len(re.findall(r'\.(call|delegatecall|staticcall)', code))
-        nesting_depth = max(line.count('{') for line in lines)
+        nesting_depth = max(line.count('{') for line in code.split('\n'))
+        state_variables = len(re.findall(r'^\s*(uint|int|bool|address|string|bytes|mapping)', code, re.MULTILINE))
         
-        score = self.calculate_complexity_score(len(lines), external_calls, nesting_depth)
-        risk_level = "Low" if score >= 80 else "Medium" if score >= 60 else "High"
+        # Upgradability check
+        is_upgradeable = 'upgradeable' in code.lower() or 'proxy' in code.lower()
+        has_owner = 'owner' in code.lower()
         
-        return {
-            "score": score,
-            "details": [
-                f"Lines of Code: {len(lines)}",
-                f"External Calls: {external_calls}",
-                f"Maximum Nesting Depth: {nesting_depth}"
-            ],
-            "risk_level": risk_level
-        }
-
-    def calculate_vulnerability_score(self, vulnerabilities: list) -> int:
-        """Calculate vulnerability score based on found issues"""
-        base_score = 100
+        # Behavior analysis
+        has_reentrancy_guard = 'nonReentrant' in code
+        has_access_control = 'onlyOwner' in code or 'require(msg.sender ==' in code
         
-        # Deduct points for each vulnerability
-        deductions = {
-            "reentrancy": 30,
-            "selfdestruct": 25,
-            "unchecked_external_call": 20,
-            "tx_origin": 15,
-            "integer_overflow": 15,
-            "unprotected_functions": 10
-        }
-        
-        for vuln in vulnerabilities:
-            for key, deduction in deductions.items():
-                if key in vuln.lower():
-                    base_score -= deduction
-        
-        return max(0, base_score)
-
-    def analyze_vulnerabilities(self, code: str) -> dict:
-        vulnerabilities = []
-        
-        # Check for common vulnerabilities
-        if 'selfdestruct' in code:
-            vulnerabilities.append("Contains selfdestruct - high risk")
-        if '.call.value' in code and 'nonReentrant' not in code:
-            vulnerabilities.append("Potential reentrancy vulnerability")
-        if 'tx.origin' in code:
-            vulnerabilities.append("Unsafe use of tx.origin")
-        if not re.search(r'require\(|assert\(', code):
-            vulnerabilities.append("Missing input validation")
-        
-        score = self.calculate_vulnerability_score(vulnerabilities)
-        risk_level = "Low" if score >= 80 else "Medium" if score >= 60 else "High"
-        
-        return {
-            "score": score,
-            "details": vulnerabilities if vulnerabilities else ["No major vulnerabilities detected"],
-            "risk_level": risk_level
-        }
-
-    def analyze_all(self, code: str) -> dict:
-        # Get individual analyses
-        complexity = self.analyze_complexity(code)
-        vulnerabilities = self.analyze_vulnerabilities(code)
-        
-        # Calculate overall score (weighted average)
-        overall_score = round(
-            complexity["score"] * 0.3 +  # 30% weight for complexity
-            vulnerabilities["score"] * 0.7  # 70% weight for vulnerabilities
+        # Calculate scores
+        complexity_score = 100 - (
+            min(50, loc/10) +  # -5 points per 10 lines
+            (external_calls * 10) +  # -10 points per external call
+            (nesting_depth * 5) +  # -5 points per nesting level
+            (state_variables * 2)  # -2 points per state variable
         )
         
+        upgradability_score = 100
+        if is_upgradeable:
+            upgradability_score -= 30  # Major deduction for upgradeability
+        if not has_access_control and has_owner:
+            upgradability_score -= 20  # Deduction for poor access control
+            
+        behavior_score = 80
+        if not has_reentrancy_guard and external_calls > 0:
+            behavior_score -= 30
+        if not has_access_control:
+            behavior_score -= 20
+            
         return {
-            "overall_score": overall_score,
-            "complexity": complexity,
-            "vulnerabilities": vulnerabilities,
-            "recommendations": self.generate_recommendations(complexity, vulnerabilities)
+            "loc": loc,
+            "external_calls": external_calls,
+            "nesting_depth": nesting_depth,
+            "state_variables": state_variables,
+            "complexity_score": max(0, min(100, complexity_score)),
+            "upgradability_score": max(0, min(100, upgradability_score)),
+            "upgradability_details": [
+                f"Upgradeable: {'Yes' if is_upgradeable else 'No'}",
+                f"Access Control: {'Yes' if has_access_control else 'No'}",
+            ],
+            "behavior_score": max(0, min(100, behavior_score)),
+            "behavior_details": [
+                f"Reentrancy Protection: {'Yes' if has_reentrancy_guard else 'No'}",
+                f"Access Controls: {'Yes' if has_access_control else 'No'}",
+            ]
         }
 
-    def generate_recommendations(self, complexity: dict, vulnerabilities: dict) -> list:
-        """Generate recommendations based on analysis results"""
-        recommendations = []
+    def _ai_analysis(self, code: str) -> dict:
+        prompt = f"Analyze this smart contract:\n\n{code}\n\nSecurity Analysis:"
         
-        # Complexity recommendations
-        if complexity["score"] < 80:
-            if "Lines of Code" in str(complexity["details"]):
-                recommendations.append("Consider breaking down the contract into smaller, more manageable components")
-            if "External Calls" in str(complexity["details"]):
-                recommendations.append("Minimize external calls to reduce attack surface")
-            if "Nesting Depth" in str(complexity["details"]):
-                recommendations.append("Reduce code nesting to improve readability and auditability")
+        inputs = self.tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True)
+        outputs = self.model.generate(
+            **inputs,
+            max_length=1024,
+            do_sample=True,
+            temperature=0.7,
+            num_return_sequences=1
+        )
         
-        # Vulnerability recommendations
-        if "reentrancy" in str(vulnerabilities["details"]).lower():
-            recommendations.append("Implement ReentrancyGuard and follow checks-effects-interactions pattern")
-        if "selfdestruct" in str(vulnerabilities["details"]).lower():
-            recommendations.append("Remove or secure selfdestruct functionality")
-        if "tx.origin" in str(vulnerabilities["details"]).lower():
-            recommendations.append("Use msg.sender instead of tx.origin")
+        analysis = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
         
-        return recommendations
+        # Parse vulnerabilities
+        vulnerabilities = []
+        security_score = 100
+        
+        for line in analysis.split('\n'):
+            if 'vulnerability' in line.lower() or 'risk' in line.lower():
+                vulnerabilities.append(line.strip())
+                security_score -= 10  # Deduct points for each vulnerability
+                
+        return {
+            "security_score": max(0, min(100, security_score)),
+            "vulnerabilities": vulnerabilities if vulnerabilities else ["No major vulnerabilities detected"]
+        }
+
+    def _calculate_final_score(self, static_metrics: dict, ai_analysis: dict) -> int:
+        weights = {
+            "complexity": 0.3,
+            "security": 0.4,
+            "upgradability": 0.15,
+            "behavior": 0.15
+        }
+        
+        final_score = (
+            static_metrics["complexity_score"] * weights["complexity"] +
+            ai_analysis["security_score"] * weights["security"] +
+            static_metrics["upgradability_score"] * weights["upgradability"] +
+            static_metrics["behavior_score"] * weights["behavior"]
+        )
+        
+        return round(max(0, min(100, final_score)))
+
+    def _get_risk_level(self, score: float) -> str:
+        if score >= 80:
+            return "Low"
+        elif score >= 60:
+            return "Medium"
+        return "High"
 
 def main():
     if len(sys.argv) != 2:
         print("Usage: python security_analyzer.py <contract_file>")
         sys.exit(1)
-        
-    with open(sys.argv[1], 'r') as f:
-        code = f.read()
     
-    analyzer = SecurityAnalyzer()
-    result = analyzer.analyze_all(code)
-    print(json.dumps(result))
+    try:
+        with open(sys.argv[1], 'r') as f:
+            code = f.read()
+        
+        analyzer = SecurityAnalyzer()
+        result = analyzer.analyze_contract(code)
+        print(json.dumps(result))
+        
+    except Exception as e:
+        print(json.dumps({
+            "overall_score": 0,
+            "complexity": {"score": 0, "details": [str(e)], "risk_level": "High"},
+            "vulnerabilities": {"score": 0, "details": [str(e)], "risk_level": "High"},
+            "upgradability": {"score": 0, "details": [str(e)], "risk_level": "High"},
+            "behavior": {"score": 0, "details": [str(e)], "risk_level": "High"}
+        }))
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
