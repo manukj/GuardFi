@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Head from "next/head";
+// Import Head component
 import analyzeContract from "../api/analyzeContract";
 import SecurityAnalysis from "./component/security_analysis";
 import { AlertTriangle } from "lucide-react";
@@ -26,6 +28,7 @@ const Dashboard = () => {
   const [response, setResponse] = useState<SecurityAnalysisResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [insurancePurchased, setInsurancePurchased] = useState<boolean>(false);
 
   useEffect(() => {
     const storedContractContent = localStorage.getItem("contractContent");
@@ -56,18 +59,6 @@ const Dashboard = () => {
     fetchAnalysis();
   }, [contractContent]);
 
-  const calculateRiskLevel = (score: number): string => {
-    if (score >= 80) return "Safe to deploy";
-    if (score >= 60) return "Deploy with caution";
-    return "High risk - Review recommended";
-  };
-
-  const getDeployButtonClass = (score: number): string => {
-    if (score >= 80) return "bg-green-500 hover:bg-green-600";
-    if (score >= 60) return "bg-yellow-500 hover:bg-yellow-600";
-    return "bg-red-500 hover:bg-red-600";
-  };
-
   const calculateInsurancePremium = (analysisResult: SecurityAnalysisResponse): number => {
     const baseRate = 1000; // Base premium in USD
 
@@ -89,6 +80,11 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 text-black flex flex-col items-center">
+      {/* Add title to the page */}
+      <Head>
+        <title>Smart Contract Security Analysis | GuardFi</title>
+      </Head>
+
       {isLoading ? (
         <CommonLoader loadingText="Analyzing your smart contract for security vulnerabilities..." />
       ) : (
@@ -114,25 +110,34 @@ const Dashboard = () => {
               <div className="w-full px-4 py-6 bg-white border-t">
                 <div className="max-w-7xl mx-auto space-y-4">
                   {/* Insurance Cost Display */}
-                  <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                    <h3 className="text-lg font-semibold text-blue-800">Recommended Insurance</h3>
-                    <p className="text-blue-600">Estimated monthly premium: ${calculateInsurancePremium(response)}</p>
-                    <p className="text-sm text-blue-500 mt-1">Premium based on comprehensive risk analysis</p>
-                  </div>
+                  {!insurancePurchased ? (
+                    <>
+                      <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                        <h3 className="text-lg font-semibold text-blue-800">Recommended Insurance</h3>
+                        <p className="text-blue-600">
+                          Estimated monthly premium: ${calculateInsurancePremium(response)}
+                        </p>
+                        <p className="text-sm text-blue-500 mt-1">Premium based on comprehensive risk analysis</p>
+                      </div>
 
-                  <button
-                    onClick={() => console.log("Deploy contract")}
-                    className={`w-full py-4 text-white rounded-lg transition-colors ${getDeployButtonClass(
-                      response.overall_score,
-                    )}`}
-                  >
-                    Deploy Contract ({calculateRiskLevel(response.overall_score)})
-                  </button>
-
-                  {response.overall_score < 80 && (
-                    <p className="text-center text-sm text-gray-600">
-                      Consider addressing security concerns before deployment
-                    </p>
+                      {/* Purchase Insurance Button */}
+                      <button
+                        onClick={() => setInsurancePurchased(true)}
+                        className="w-full py-4 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                      >
+                        Purchase Insurance
+                      </button>
+                    </>
+                  ) : (
+                    <div className="bg-yellow-50 p-4 rounded-lg mb-4">
+                      <h3 className="text-lg font-semibold text-yellow-800">Did an exploit happen?</h3>
+                      <button
+                        onClick={() => console.log("Exploit event sent")}
+                        className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors mt-2"
+                      >
+                        Send Exploit Event
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
